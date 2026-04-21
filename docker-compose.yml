@@ -31,7 +31,16 @@ services:
         chmod 700 /var/lib/tor/pb_service &&
         echo "HiddenServiceDir /var/lib/tor/pb_service" > /etc/tor/torrc &&
         echo "HiddenServicePort 80 pocketbase:8090" >> /etc/tor/torrc &&
-        tor -f /etc/tor/torrc
+        tor -f /etc/tor/torrc &
+        TOR_PID="$$!" &&
+        for i in $$(seq 1 60); do
+          if [ -f /var/lib/tor/pb_service/hostname ]; then
+            echo "Onion hostname: $$(cat /var/lib/tor/pb_service/hostname)" &&
+            break
+          fi
+          sleep 1
+        done &&
+        wait "$$TOR_PID"
     volumes:
       - ./tor_data:/var/lib/tor/pb_service
     ports:
