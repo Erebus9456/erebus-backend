@@ -1,0 +1,51 @@
+services:
+  pocketbase:
+    image: alpine:3.18
+    container_name: pocketbase
+    restart: unless-stopped
+    working_dir: /app
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        apk add --no-cache curl unzip &&
+        curl -L https://github.com/pocketbase/pocketbase/releases/download/v0.21.0/pocketbase_0.21.0_linux_amd64.zip -o pb.zip &&
+        unzip pb.zip &&
+        chmod +x pocketbase &&
+        ./pocketbase migrate up &&
+        ./pocketbase serve --http=0.0.0.0:8090
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/app/pb_data
+      - ./pb_migrations:/app/pb_migrations
+
+  tor:
+    image: alpine:3.18
+    container_name: tor
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache tor &&
+        mkdir -p /var/lib/tor/pb_service &&
+        chmod 700 /var/lib/tor/pb_service &&
+        echo "HiddenServiceDir /var/lib/tor/pb_service" > /etc/tor/torrc &&
+        echo "HiddenServicePort 80 pocketbase:8090" >> /etc/tor/torrc &&
+        tor -f /etc/tor/torrc
+    volumes:
+      - ./tor_data:/var/lib/tor/pb_service
+    ports:
+      - "9050:9050"
+
+  socat-onion:
+    image: alpine/socat
+    container_name: socat-onion
+    restart: unless-stopped
+    depends_on:
+      - tor
+      - pocketbase
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        socat TCP-LISTEN:8080,fork
+        SOCKS4A:tor:pocketbase:8090,socksport=9050
