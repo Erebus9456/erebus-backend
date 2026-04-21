@@ -1,4 +1,12 @@
-pb_data/
-tor_data/
+## macOS
 .DS_Store
+
+## PocketBase runtime data (db, storage, logs, backups)
+pb_data/
+
+## Tor hidden-service state (hostname + keys)
+tor_data/
+
+## Local helper script contains admin token (do not commit)
 pb_helper_collections.sh
+
