@@ -1,2 +1,4 @@
 pb_data/
 tor_data/
+.DS_Store
+pb_helper_collections.sh
