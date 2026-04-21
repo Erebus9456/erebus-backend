@@ -50,6 +50,16 @@ Stop:
 docker compose down
 ```
 
+## Tor hidden service hostname (`tor_data/hostname`)
+
+On the **first** `docker compose up` / `docker compose up -d`, Tor will generate an onion service identity and write the hostname to:
+
+- `tor_data/hostname`
+
+This file is **persisted** via the `./tor_data` bind mount, so the onion hostname stays the same across restarts.
+
+If you delete `tor_data/` and start again, Tor will generate a **new** hostname.
+
 ## Reset to a fresh database (recreate schema from migrations)
 
 Because `pb_data/` is bind-mounted, it persists between runs. To start from a clean DB:
